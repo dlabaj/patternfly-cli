@@ -12,6 +12,7 @@ import { runCreate } from './create.js';
 import { runSave } from './save.js';
 import { runLoad } from './load.js';
 import { runDeployToGitHubPages } from './gh-pages.js';
+import { runContextForAi } from './context-for-ai.js';
 import { readPackageVersion } from './read-package-version.js';
 import { promptAndSetLocalGitUser } from './git-user-config.js';
 
@@ -144,6 +145,31 @@ program
     }
     
     console.log('\n✨ All updates completed successfully! ✨');
+  });
+
+/** Command to run the context-for-ai codemod (semantic data-* attributes for PatternFly) */
+program
+  .command('context-for-ai')
+  .description(
+    'Add semantic data-* attributes to PatternFly components for AI tooling (https://github.com/patternfly/context-for-ai)',
+  )
+  .argument('[path]', 'Source directory or file to transform (defaults to "src")')
+  .option('-C, --cwd <dir>', 'Project directory (defaults to the current working directory)')
+  .option('--dry', 'Print changes without writing files')
+  .action(async (srcPath, options: { cwd?: string; dry?: boolean }) => {
+    const cwd = options.cwd ? path.resolve(options.cwd) : process.cwd();
+    const target = srcPath || 'src';
+    try {
+      await runContextForAi(cwd, target, options.dry ? { dry: true } : {});
+      console.log('\n✅ context-for-ai codemod finished.\n');
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(`\n❌ ${error.message}\n`);
+      } else {
+        console.error(error);
+      }
+      process.exit(1);
+    }
   });
 
 /** Command to save changes: check for changes, prompt to commit, and push */
